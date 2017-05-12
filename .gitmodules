@@ -1,0 +1,6 @@
+[submodule "landlab"]
+	path = landlab
+	url = https://github.com/landlab/landlab.git
+[submodule "tutorials"]
+	path = tutorials
+	url = https://github.com/landlab/tutorials.git
