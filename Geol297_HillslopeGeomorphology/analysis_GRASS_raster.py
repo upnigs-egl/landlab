@@ -37,23 +37,25 @@ plt.close('all')
 
 #0 DEFAULT VALUES
 maptypes=['elev', 'grad', 'asp', 'crosc', 'feature', 'flowacc', 'basins']  #input names of raster files here
-mapcolors=['terrain','inferno','Greys','coolwarm','jet','plasma','tab10']  #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
+mapunits=['m','deg','deg azimuth', 'm^-1','feature type', 'log num pixels','id']
+mapcolors=['terrain','inferno','Greys','coolwarm','jet','plasma','gist-rainbow']  #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
 loc_list=['location1','location2']#,'location3'] #input corresponding folder names for each map location
 
+#%%
 #1 READING INPUT MAPS
 map_list=[]
 for l in range(len(loc_list)):
     map_list.append(get_input_maps(maptypes,loc_list[l]))
-
 map_list=np.array(map_list)
 
 
-#2 PLOTTING MAPS
-mapcolors=['terrain','inferno','Greys','coolwarm','Set1','plasma','gist-rainbow']  #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
 
-which_loc=[0,1] #### Input location number/s here (separate with comma)
-which_map=[4,6]  #### Input map number/s here (separate with comma)
-plt.ion()
+#%%
+#2 PLOTTING MAPS
+which_loc=[0,1]     #### Input location number/s here (separate with comma)
+which_map=[4,6]     #### Input map number/s here (separate with comma)
+which_area=[50,-1]  #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
+plt.close('all')
 for m in which_map:
     mapmax=np.max([np.nanmax(map_list[l,m]) for l in which_loc])
     mapmin=np.min([np.nanmin(map_list[l,m]) for l in which_loc])
@@ -66,24 +68,89 @@ for m in which_map:
         mapmax=ext
     mapfig,mapax=plt.subplots(ncols=1,nrows=len(which_loc))#,sharex=True,sharey=True)
     for l in which_loc:
+        if which_area[l]==-1:
+            inArea=map_list[l,m]
+        else:
+            inArea=np.where(map_list[l,6]==which_area[l],map_list[l,m],map_list[l,m]*np.nan)
         try:
-            im=mapax[l].imshow(map_list[l,m],cmap=plt.get_cmap(mapcolors[m]),vmin=mapmin,vmax=mapmax)
+            im=mapax[l].imshow(inArea,cmap=plt.get_cmap(mapcolors[m]),vmin=mapmin,vmax=mapmax)
         except:
-            im=mapax[l].imshow(map_list[l,m],vmin=mapmin,vmax=mapmax)
+            im=mapax[l].imshow(inArea,vmin=mapmin,vmax=mapmax)
         mapax[l].axis('equal')
     cbaxes = mapfig.add_axes([0.85, 0.1, 0.03, 0.8]) 
     plt.subplots_adjust(right=0.8)
     plt.colorbar(im,cax=cbaxes)
-#
-#
-##3 PLOTTING HISTOGRAMS OF AT LEAST TWO AREAS
-#which_map=1     #### Input map number here (one value only)
-#which_area=[50,208]   #### Input basin numbers here (at least two values)
-#nhistbins=20
-#fig,ax=plt.subplots(nrows=len(which_area),ncols=1,sharex=True)
-#for w in range(len(which_area)):
-#    map_inArea=np.where(map_list[-1]==which_area[w],map_list[which_map],map_list[which_map]*np.nan)
-#    ax[w].hist(map_inArea[np.isfinite(map_inArea)],bins=nhistbins)
+
+
+#%%    
+#3 PLOTTING HISTOGRAMS
+which_loc=[0,1]         #### Input location number/s here (separate with comma)
+which_map=[1,3,5]       #### Input map number/s here (separate with comma)
+which_area=[50,-1]      #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
+nhistbins=20
+plt.close('all')
+for m in which_map:
+    histfig,histax=plt.subplots(ncols=1,nrows=len(which_loc),sharex=True)#sharey=True)
+    for l in which_loc:
+        if which_area[l]==-1:
+            inArea=map_list[l,m]
+        else:
+            inArea=np.where(map_list[l,6]==which_area[l],map_list[l,m],map_list[l,m]*np.nan)
+        histax[l].hist(inArea[np.isfinite(inArea)],bins=nhistbins,normed=True,label=loc_list[l]+' '+str(which_area[l]))
+#        histax[l].set_title(loc_list[l]+' '+str(which_area[l]))
+        histax[l].legend()
+    histax[l].set_xlabel(maptypes[m]+', '+mapunits[m])
+ 
+
+
+
+#%%    
+#4 PLOTTING SCATTER PLOTS
+which_loc=[0,1]         #### Input location number/s here (separate with comma)
+which_mapX=[1,5]       #### Input map number/s here (separate with comma)
+which_mapY=[3,1]       #### Input map number/s here (separate with comma)
+which_mapZ=[4,3]       #### Input map number/s here (separate with comma)
+which_area=[78,50]      #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
+plt.close('all')
+for m in range(len(which_mapX)):
+    mapmax=np.max([np.nanmax(map_list[l,which_mapZ[m]]) for l in which_loc])
+    mapmin=np.min([np.nanmin(map_list[l,which_mapZ[m]]) for l in which_loc])
+    if which_mapZ[m]==3:
+        ext=0.5*np.max([abs(mapmin),abs(mapmax)])
+        mapmin=ext*-1
+        mapmax=ext
+
+    isFinite=np.isfinite(map_list[l,which_mapX[m]])*np.isfinite(map_list[l,which_mapY[m]])*np.isfinite(map_list[l,which_mapZ[m]])
+    scatfig,scatax=plt.subplots(ncols=1,nrows=len(which_loc),sharex=True,sharey=True)
+
+
+    for l in which_loc:
+        inAreaX=map_list[l,which_mapX[m]][isFinite]
+        inAreaY=map_list[l,which_mapY[m]][isFinite]
+        inAreaZ=map_list[l,which_mapZ[m]][isFinite]
+        if which_area[l]!=-1:
+            inAreaX=np.where(map_list[l,6][isFinite]==which_area[l],inAreaX,inAreaX*np.nan)
+            inAreaY=np.where(map_list[l,6][isFinite]==which_area[l],inAreaY,inAreaY*np.nan)
+            inAreaZ=np.where(map_list[l,6][isFinite]==which_area[l],inAreaZ,inAreaZ*np.nan)
+            print inAreaZ[np.isfinite(inAreaZ)].shape
+        else:
+            print inAreaZ.shape
+        print mapcolors[which_mapZ[m]]
+        sc=scatax[l].scatter(inAreaX[np.isfinite(inAreaZ)],inAreaY[np.isfinite(inAreaZ)],c=inAreaZ[np.isfinite(inAreaZ)],cmap=plt.get_cmap(mapcolors[which_mapZ[m]]),vmin=mapmin,vmax=mapmax,marker='+',alpha=0.1)#,c=inAreaZ,cmap=plt.get_cmap(mapcolors[which_mapZ[m]]))
+
+    cbaxes = scatfig.add_axes([0.85, 0.1, 0.03, 0.8]) 
+    plt.subplots_adjust(right=0.8)
+    plt.colorbar(sc,cax=cbaxes)    
+#%%     
+    
+    
+    
+  
+    
+
+
+
+    
 
 
 ##4 PLOTTING SCATTERPLOTS OF 2 MAPS AND AT LEAST TWO AREAS
