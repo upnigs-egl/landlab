@@ -38,7 +38,7 @@ plt.close('all')
 #0 DEFAULT VALUES
 maptypes=['elev', 'grad', 'asp', 'crosc', 'feature', 'flowacc', 'basins']  #input names of raster files here
 mapcolors=['terrain','inferno','Greys','coolwarm','jet','plasma','tab10']  #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
-loc_list=['location1','location2','location3'] #input corresponding folder names for each map location
+loc_list=['location1','location2']#,'location3'] #input corresponding folder names for each map location
 
 #1 READING INPUT MAPS
 map_list=[]
@@ -49,8 +49,10 @@ map_list=np.array(map_list)
 
 
 #2 PLOTTING MAPS
-which_loc=[0,1,2] #### Input location number/s here (separate with comma)
-which_map=[0,1]  #### Input map number/s here (separate with comma)
+mapcolors=['terrain','inferno','Greys','coolwarm','Set1','plasma','gist-rainbow']  #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
+
+which_loc=[0,1] #### Input location number/s here (separate with comma)
+which_map=[4,6]  #### Input map number/s here (separate with comma)
 plt.ion()
 for m in which_map:
     mapmax=np.max([np.nanmax(map_list[l,m]) for l in which_loc])
@@ -58,6 +60,10 @@ for m in which_map:
 #    print "Range is from "+str(mapmin)+" to "+str(mapmax)
 #    mmin=float(raw_input("Input minimum value for plot "))
 #    mmax=float(raw_input("Input maximum value for plot "))
+    if m==3:
+        ext=0.6*np.max([abs(mapmin),abs(mapmax)])
+        mapmin=ext*-1
+        mapmax=ext
     mapfig,mapax=plt.subplots(ncols=1,nrows=len(which_loc))#,sharex=True,sharey=True)
     for l in which_loc:
         try:
