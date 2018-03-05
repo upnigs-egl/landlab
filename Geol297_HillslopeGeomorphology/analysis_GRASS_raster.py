@@ -9,6 +9,7 @@ Created on Fri Feb  9 13:59:48 2018
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
+import cmocean
 
 #%%
 #FUNCTIONS
@@ -19,16 +20,18 @@ def get_input_maps(maptypes,locationfolder):
     map_list=[]
     for m in maptypes:
         try:
-            print locationfolder+'/'+m
             mp=import_grass_raster_ascii(locationfolder+'/'+m,dtype=float,filling_values=np.nan,skip_header=6,delimiter=' ',missing_values='*' )
-            print m, mp.shape
             if m=='flowacc':
-                mp=np.where(np.isfinite(mp),mp,np.zeros(mp.shape))
-                mp=np.where(mp>0,mp,mp*np.nan)#removing pixels where drainage source includes areas outside the map (negative values)
-                mp=np.log10(np.abs(mp))
+#                mp=np.where(np.isfinite(mp),mp,np.zeros(mp.shape))
+#                mp=np.where(mp>0,mp,mp*np.nan)#removing pixels where drainage source includes areas outside the map (negative values)
+#                mp=np.log10(np.abs(mp))
+                mp=np.log10(np.where(np.isfinite(mp),np.where(mp>0,mp,mp*np.nan),mp)) #removing pixels where drainage source includes areas outside the map (negative values)
+            if m=='asp':
+                mp=np.where(np.isfinite(mp),np.where(mp>0,mp,360+mp),mp)
+            print locationfolder+'/'+m, mp.shape
         except:
             mp=np.array([])
-            print m,'file does not exist'
+            print '\n',locationfolder+'/'+m, mp.shape, 'file does not exist'
         map_list.append(mp)
     return map_list
 
@@ -40,25 +43,26 @@ def discrete_feature_color():
     return cmap,norm
 
   
-plt.close('all')
+
 #%%
 # 0 DEFAULT VALUES
 maptypes=['elev', 'grad', 'asp', 'crosc', 'feature', 'flowacc', 'basins']           #input names of raster files here
 mapunits=['m','deg','deg azimuth', 'm^-1','type', 'log num pixels','id']
 mapcolors=['terrain','inferno','Greys','coolwarm','jet','plasma','gist_rainbow']    #colormaps corresponding to map files (see https://matplotlib.org/examples/color/colormaps_reference.html)
-loc_list=['location1','location2','location3']                                       #input corresponding folder names for each map location
-loc_name_list=['study area A','study area B','study area C']                        #input corresponding names of locations
+loc_list=['location1','location2']#,'location3']                                       #input corresponding folder names for each map location
+loc_name_list=['study area A','study area B']#,'study area C']                        #input corresponding names of locations
 #%%
 # 1 READING INPUT MAPS
 map_list=[]
 for l in range(len(loc_list)):
     map_list.append(get_input_maps(maptypes,loc_list[l]))
 map_list=np.array(map_list)
+plt.close('all')
 
 #%%
 # 2 PLOTTING MAPS
 which_loc=[0,1]     #### Input location number/s here (separate with comma)
-which_map=[0,1,2]     #### Input map number/s here (separate with comma)
+which_map=[0,2]     #### Input map number/s here (separate with comma)
 which_area=[-1,-1]  #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
 loc_name_list=['A','B']#,'C'] 
 plt.close('all')
@@ -82,7 +86,10 @@ for m in which_map:
             except:
                 print 'Basin/subarea ',which_area[l],' not found.'
                 inArea=map_list[l,m]
-        if m==4:cmap,norm=discrete_feature_color()
+        if m==4:
+            cmap,norm=discrete_feature_color(),None
+        elif m==2:
+            cmap,norm=cmocean.cm.phase,None
         else:cmap,norm=plt.get_cmap(mapcolors[m]),None
         try:
             im=mapax[l].imshow(inArea,cmap=cmap,norm=norm,vmin=mapmin,vmax=mapmax)
@@ -105,9 +112,9 @@ for m in which_map:
 
 #%%    
 # 3 PLOTTING HISTOGRAMS
-which_loc=[0,1,2]         #### Input location number/s here (separate with comma)
-which_map=[1,3,5]       #### Input map number/s here (separate with comma)
-which_area=[78,50,208]      #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
+which_loc=[0,1]         #### Input location number/s here (separate with comma)
+which_map=[1,3]       #### Input map number/s here (separate with comma)
+which_area=[78,50]      #### Input basin/subarea number/s (corresponding to location) here; use -1 to plot all  (separate with comma)
 nhistbins=20
 
 plt.close('all')
