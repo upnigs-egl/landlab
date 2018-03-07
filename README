@@ -1,0 +1,8 @@
+submodules:
+landlab <https://github.com/landlab/landlab>
+tutorials <https://github.com/landlab/tutorials>
+
+to update all submodules:
+git submodule foreach git pull origin master
+git commit -am "Pulled down update to submodule_dir"
+git push origin master
